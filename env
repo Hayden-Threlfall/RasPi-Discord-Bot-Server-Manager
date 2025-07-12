@@ -1,0 +1,9 @@
+# CHANGE ME TO .env
+# Token Used For Discord's Authentication
+DISCORD_TOKEN=<YOUR DISCORD TOKEN>
+
+# General Channel ID (not required rn)
+CHANNEL_ID=<YOUR DISCORD CHANNEL ID>
+
+# Server ID
+GUILD_ID=<YOUR DISCORD SERVER ID>
