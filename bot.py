@@ -11,26 +11,27 @@ from dotenv import load_dotenv
 from threading import Thread
 from threading import Lock
 from wakeonlan import send_magic_packet
+from ping3 import ping
 
 POWER_PIN = 14
 CHIP = "gpiochip0"
+
 #Set .env Declarations
 load_dotenv()
-DISCORD_TOKEN = os.getenv("SERVER_IP")
-DISCORD_GUILD_ID = int(os.getenv("SERVER_IP")) 
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+DISCORD_GUILD_ID = int(os.getenv("DISCORD_GUILD_ID")) 
 SERVER_IP = os.getenv("SERVER_IP")
+SERVER_IP2 = os.getenv("SERVER_IP2")
 PORT = int(os.getenv("PORT", 22))  # fallback to 22 if not set
 SERVER_MAC = os.getenv("SERVER_MAC")
+SERVER_MAC2 = os.getenv("SERVER_MAC2")
 SERVER_USER = os.getenv("SERVER_USER")
 SSH_KEY_PATH = os.getenv("SSH_KEY_PATH")
 ALLOWED_ROLE_ID = int(os.getenv("ALLOWED_ROLE_ID", 0)) # set to 0, so any user can use
 lock = Lock()
 
-# Check if a given IP is online using ping
 def is_online(ip):
-    param = '-n' if platform.system().lower() == 'windows' else '-c'
-    response = os.system(f"ping {param} 1 {ip} > /dev/null 2>&1")
-    return response == 0
+    return ping(ip, timeout=1) is not None
 
 async def ssh_run_command(server_ip, port, username, key_filepath, command):
     async with asyncssh.connect(
@@ -42,7 +43,6 @@ async def ssh_run_command(server_ip, port, username, key_filepath, command):
         result = await conn.run(command, check=True)
         print(result.stdout)
 
-# Custom Bot class
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(
@@ -64,21 +64,18 @@ async def lock_check(interaction):
         return False
     return True
 
-# Create the bot instance
 bot = MyBot()
 
 @bot.event
 async def on_ready():
     print(f"Bot is ready! Logged in as {bot.user} (ID: {bot.user.id})")
     
-    # Sync slash commands to your specific guild
     guild = discord.Object(id=DISCORD_GUILD_ID)
     bot.tree.copy_global_to(guild=guild)
     synced = await bot.tree.sync(guild=guild)
     print(f"Synced Commands to Server {DISCORD_GUILD_ID}")
     
 
-# Command to toggle GPIO pin for 10 seconds
 @bot.tree.command(name="force_start_server")
 async def force_start_server(interaction: discord.Interaction):
     if not await lock_check(interaction): return
@@ -143,9 +140,30 @@ async def start_server(interaction: discord.Interaction):
             await interaction.edit_original_response(content = "✅ Server Already Awake... ✅")
             return
         send_magic_packet(SERVER_MAC)
-        for _ in range(6):
-            await asyncio.sleep(10)
+        for _ in range(12):
+            await asyncio.sleep(5)
             if is_online(SERVER_IP):
+                await interaction.edit_original_response(content ="✅ Server Is Awake ✅")
+                break
+        else:
+            await interaction.edit_original_response(content ="❌ Server Is Not Awake Yet ❌")
+    finally:
+        lock.release()
+
+@bot.tree.command(name="start_server_2")
+async def start_server_2(interaction: discord.Interaction):
+    if not await lock_check(interaction): return
+    try:
+        if not await role_check(interaction): return
+        await interaction.response.send_message("Attempting To Start (Wake On Lan) The Server...", ephemeral=True)
+
+        if is_online(SERVER_IP2):
+            await interaction.edit_original_response(content = "✅ Server Already Awake... ✅")
+            return
+        send_magic_packet(SERVER_MAC2)
+        for _ in range(12):
+            await asyncio.sleep(5)
+            if is_online(SERVER_IP2):
                 await interaction.edit_original_response(content ="✅ Server Is Awake ✅")
                 break
         else:
@@ -216,8 +234,8 @@ async def sleep_server(interaction: discord.Interaction):
     finally:
         lock.release()
 
-@bot.tree.command(name="hybernate_server")
-async def sleep_server(interaction: discord.Interaction):
+@bot.tree.command(name="hibernate_server")
+async def hibernate_server(interaction: discord.Interaction):
     command = "sudo systemctl hibernate"
     if not await lock_check(interaction): return
     try:
@@ -250,6 +268,7 @@ async def commands(interaction: discord.Interaction):
     await interaction.response.send_message(
         "**COMMANDS FOR XBOT**\n"
         "/start_server\n"
+        "/start_server_2\n"
         "/stop_server\n"
         "/sleep_server\n"
         "/hibernate_server\n"
@@ -261,5 +280,4 @@ async def commands(interaction: discord.Interaction):
         ephemeral=True
     )
 
-# Run the bot
 bot.run(DISCORD_TOKEN)
