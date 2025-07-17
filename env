@@ -1,9 +1,30 @@
-# CHANGE ME TO .env
+# CHANGE ME TO .env after you fill out data
 # Token Used For Discord's Authentication
-DISCORD_TOKEN=<YOUR DISCORD TOKEN>
+DISCORD_TOKEN=
 
-# General Channel ID (not required rn)
-CHANNEL_ID=<YOUR DISCORD CHANNEL ID>
+# Discord Server ID
+DISCORD_GUILD_ID=
 
-# Server ID
-GUILD_ID=<YOUR DISCORD SERVER ID>
+# IP For Server For Bot To Interface
+SERVER_IP=
+
+# IP For Server2 For Bot To Interface
+SERVER_IP2=
+
+# Servers Ports
+PORT=
+
+# Servers Mac For WOL
+SERVER_MAC=
+
+# Servers2 Mac For WOL
+SERVER_MAC2=
+
+# Server User With SUDO Access
+SERVER_USER=
+
+# SSH Key Path, Make Sure To Add Public Key To Server
+SSH_KEY_PATH=
+
+# Allowed Role (ect owner) to limit users
+ALLOWED_ROLE_ID=
