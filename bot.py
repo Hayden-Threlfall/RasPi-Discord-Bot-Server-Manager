@@ -13,7 +13,7 @@ from threading import Lock
 from wakeonlan import send_magic_packet
 from ping3 import ping
 
-POWER_PIN = 14
+POWER_PIN = 17
 CHIP = "gpiochip0"
 
 #Set .env Declarations
@@ -281,3 +281,4 @@ async def commands(interaction: discord.Interaction):
     )
 
 bot.run(DISCORD_TOKEN)
+
